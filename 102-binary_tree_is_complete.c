@@ -1,123 +1,113 @@
 #include "binary_trees.h"
-
 /**
- * node_is_complete - checks if a binary tree is complete
- * @node: node to evaluate
- * Return: 1 if its complete 0 if not
+ * new_node - Function that creates a new_node in a linked_list
+ * @node: Type pointer of node to be created
+ * Return: the node created
  */
-int node_is_complete(const binary_tree_t *node)
+link_t *new_node(binary_tree_t *node)
 {
-	if ((node && node->left && node->right))
-	{
-		return (1);
-	}
-	else
-	{
-		return (0);
-	}
-}
+	link_t *new;
 
-/**
- * binary_tree_height - measures the height of a binary tree.
- *@tree: pointer to the root node of the tree to measure the height.
- * Return: if tree is NULL, your function must return 0.
- */
-size_t binary_tree_height(const binary_tree_t *tree)
-{
-	if (tree)
+	new =  malloc(sizeof(link_t));
+	if (new == NULL)
 	{
-		int left = 0, right = 0;
-
-		if (tree->right)
-			right = 1 + binary_tree_height(tree->right);
-		if (tree->left)
-			left = 1 + binary_tree_height(tree->left);
-		if (left > right)
-			return (left);
-		return (right);
+		return (NULL);
 	}
-	return (0);
+	new->node = node;
+	new->next = NULL;
+
+	return (new);
 }
 /**
- * check_complete_level - print node, especific level
- * @tree: pointer to the root node of the tree to traverse
- * @level: pointer to a function to call for each node.
- * Return: true if its complete
+ * free_q - Function that free the nodes at the linked list
+ * @head: Node of the linked_list
  */
-int check_complete_level(const binary_tree_t *tree, int level)
+void free_q(link_t *head)
 {
-	if (tree)
-	{
-		int left_v = 0, right_v = 0;
+	link_t *temp_node;
 
-		if (level == 1)
-			return (node_is_complete(tree));
-		left_v = check_complete_level(tree->left, level - 1);
-		right_v = check_complete_level(tree->right, level - 1);
-		return (left_v || right_v);
+	while (head)
+	{
+		temp_node = head->next;
+		free(head);
+		head = temp_node;
 	}
-	return (0);
 }
 /**
- * check_left_level - check especific level contain left node
- * @tree: pointer to the root node of the tree to traverse
- * @flag: flag to determinate if has left
- * @level: pointer to a function to call for each node.
- * Return: true if its complete
+ * _push - Function that pushes a node into the stack
+ * @node: Type pointer of node of the tree
+ * @head: Type head node of in the stack
+ * @tail: Type tail node of in the stack
  */
-int check_left_level(const binary_tree_t *tree, int level, int *flag)
+void _push(binary_tree_t *node, link_t *head, link_t **tail)
 {
+	link_t *new;
 
-	if (tree)
+	new = new_node(node);
+	if (new == NULL)
 	{
-		if (level == 1)
-		{
-			if (*flag && tree->right == NULL)
-				*flag = 0;
-			if (*flag == 1 && tree->right == NULL && tree->left == NULL)
-				return (1);
-			if (tree->left == NULL && *flag)
-				return (0);
-			if (*flag == 0 && (tree->right || tree->left))
-				return (0);
-			return (1);
-		}
-		else
-		{
-			int left_v = 0, right_v = 0;
-
-			left_v = check_left_level(tree->left, level - 1, flag);
-			right_v = check_left_level(tree->right, level - 1, flag);
-			return (left_v && right_v);
-		}
+		free_q(head);
+		exit(1);
 	}
-	return (0);
+	(*tail)->next = new;
+	*tail = new;
 }
 /**
- * binary_tree_is_complete -checks if a binary tree is complete
- * @tree: tree to evaluate if is complete
- * Return: 1 if its complete 0 if not
+ * _pop - Function that pops a node into the stack
+ * @head: Type head node of in the stack
+ */
+void _pop(link_t **head)
+{
+	link_t *temp_node;
+
+	temp_node = (*head)->next;
+	free(*head);
+	*head = temp_node;
+}
+/**
+ * binary_tree_is_complete - Function that checks if a binary tree is complete
+ * @tree: Type pointer of node of the tree
+ * Return: 1 if is complete 0 if it is not
  */
 int binary_tree_is_complete(const binary_tree_t *tree)
 {
-	int aux = 1, level = 1, t;
+	link_t *head, *tail;
+	int flag = 0;
 
-	if (tree)
-	{
-		t = binary_tree_height(tree);
-		while (level < t  && aux)
-		{
-			aux = check_complete_level(tree, level);
-			level++;
-		}
-		if (t == 0)
-			return (1);
-		if (aux)
-			return (check_left_level(tree, t, &aux));
-	}
-	else
+	if (tree == NULL)
 	{
 		return (0);
 	}
-	return (0);
+	head = tail = new_node((binary_tree_t *)tree);
+	if (head == NULL)
+	{
+		exit(1);
+	}
+	while (head != NULL)
+	{
+		if (head->node->left != NULL)
+		{
+			if (flag == 1)
+			{
+				free_q(head);
+				return (0);
+			}
+			_push(head->node->left, head, &tail);
+		}
+		else
+			flag = 1;
+		if (head->node->right != NULL)
+		{
+			if (flag == 1)
+			{
+				free_q(head);
+				return (0);
+			}
+			_push(head->node->right, head, &tail);
+		}
+		else
+			flag = 1;
+		_pop(&head);
+	}
+	return (1);
 }
